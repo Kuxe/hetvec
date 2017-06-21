@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <utility>
 
 /** Hetvec is a heterogenous vector (aka dynamic array)
 	which is tailored for solving the common problem where
@@ -63,6 +64,8 @@ protected:
 	void clear() { }
 };
 
+#include <stdio.h>
+
 template<typename T, typename... Ts>
 struct hetvec<T, Ts...> : hetvec<Ts...> {
 protected:
@@ -76,19 +79,30 @@ protected:
 	}
 
 public:
-	hetvec() { }
+	explicit hetvec() { }
 	template<typename... Us>
-	explicit hetvec(const T& t, const Us& ...us) :  hetvec<T, Ts...>(us...) {
+	explicit hetvec(const T& t, const Us& ...us) : hetvec<T, Ts...>(us...) {
 		v.push_back(t);
 	}
 	template<typename... Us>
 	explicit hetvec(const Us& ...us) : hetvec<Ts...>(us...) { }
+
+	template<typename... Us>
+	explicit hetvec(const T&& t, const Us&& ...us) : hetvec<T, Ts...>(std::move(us)...) {
+		v.push_back(t);
+	}
+	template<typename... Us>
+	explicit hetvec(const Us&& ...us) : hetvec<Ts...>(std::move(us)...) { }
 
 	/** When adding, recurses up the parent-list until parent who correspond to T
 		is found, at which non-generic add takes precedence over the generic add **/
 	template<typename U>
 	void push_back(const U& u) { hetvec<Ts...>::push_back(u); }
 	void push_back(const T& t) { v.push_back(t); }
+
+	template<typename U>
+	void push_back(const U&& u) { hetvec<Ts...>::push_back(std::move(u)); }
+	void push_back(const T&& t) { v.push_back(std::move(t)); }
 	
 	//Test all my elements against eachother and forward each element to parent
 	template<typename Fcns>
